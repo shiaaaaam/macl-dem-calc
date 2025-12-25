@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- iOS meta tags for PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Demurrage Calc">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- App icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <title>Maldives Airports Demurrage Calculator</title>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f0f4f8;
+            color: #1a202c;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 20px;
+            padding-top: calc(20px + env(safe-area-inset-top));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .current-time {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 8px;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 20px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background-color: white;
+            transition: border-color 0.3s;
+            -webkit-appearance: none;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        
+        input[type="datetime-local"] {
+            min-height: 44px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .card-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-box {
+            background-color: #f7fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .stat-sub {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 2px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            padding: 16px;
+            border-radius: 10px;
+            margin: 16px 0;
+        }
+        
+        .highlight-label {
+            font-size: 14px;
+            color: #92400e;
+            margin-bottom: 4px;
+        }
+        
+        .highlight-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #78350f;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .table th {
+            background-color: #f7fafc;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .table th:last-child,
+        .table td:last-child {
+            text-align: right;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .summary-label {
+            color: #4a5568;
+            font-size: 14px;
+        }
+        
+        .summary-value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        
+        .notes {
+            background-color: #eff6ff;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #3730a3;
+            line-height: 1.6;
+        }
+        
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .install-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+        
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>🛫 Maldives Airports Demurrage</h1>
+            <div class="current-time" id="currentTime"></div>
+        </div>
+        
+        <div class="content">
+            <div class="card">
+                <div class="input-group">
+                    <label>✈️ Flight Arrival Date & Time</label>
+                    <input type="datetime-local" id="arrivalDate" />
+                </div>
+                
+                <div class="input-group">
+                    <label>📦 Shipment Weight (kg)</label>
+                    <input type="number" id="weight" placeholder="Enter weight in kg" inputmode="decimal" />
+                </div>
+            </div>
+            
+            <div id="results" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                        </svg>
+                        Time Calculations
+                    </div>
+                    
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">Total Time Elapsed</div>
+                            <div class="stat-value" id="hoursElapsed">0</div>
+                            <div class="stat-sub" id="daysElapsed"></div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Chargeable Time</div>
+                            <div class="stat-value" id="chargeableHours">0</div>
+                            <div class="stat-sub" id="chargeableDaysExact"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-box" style="background-color: #fef3c7; border-color: #f59e0b;">
+                        <div class="stat-label">Free Period Ends</div>
+                        <div class="stat-value" style="font-size: 14px;" id="freeEndTime"></div>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <div class="highlight-label">Chargeable Days (Rounded Up)</div>
+                        <div class="highlight-value"><span id="chargeableDaysRounded">0</span> days</div>
+                        <div class="stat-sub">Quantity: <span id="quantity">0</span> (kg × days)</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                        </svg>
+                        Rate Breakdown
+                    </div>
+                    
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Days</th>
+                                <th>Rate</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Days 3-10</td>
+                                <td id="days3to10">0</td>
+                                <td>2.30</td>
+                                <td id="charge3to10">0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Days 11-20</td>
+                                <td id="days11to20">0</td>
+                                <td>3.66</td>
+                                <td id="charge11to20">0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Days 21+</td>
+                                <td id="days21plus">0</td>
+                                <td>6.10</td>
+                                <td id="charge21plus">0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm1 2a1 1 0 011-1h2a1 1 0 110 2H6a1 1 0 01-1-1zm8 0a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        Charges Summary
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">Subtotal Demurrage</span>
+                        <span class="summary-value">MVR <span id="subtotal">0.00</span></span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">Minimum Charge</span>
+                        <span class="summary-value">MVR 30.00</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">Applicable Demurrage</span>
+                        <span class="summary-value">MVR <span id="applicableDemurrage">0.00</span></span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">GST (8%)</span>
+                        <span class="summary-value">MVR <span id="gst">0.00</span></span>
+                    </div>
+                    
+                    <div class="total-row">
+                        <span>TOTAL DUE</span>
+                        <span>MVR <span id="total">0.00</span></span>
+                    </div>
+                </div>
+                
+                <div class="notes">
+                    <strong>Notes:</strong><br>
+                    • 80 hours (3.33 days) free from arrival<br>
+                    • Partial days rounded UP for billing<br>
+                    • Min charge: MVR 30 | GST: 8%<br>
+                    • Rates: Days 3-10: MVR 2.30 | 11-20: MVR 3.66 | 21+: MVR 6.10
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="install-prompt" id="installPrompt">
+        <button class="close-button" onclick="hideInstallPrompt()">&times;</button>
+        <h3>Install Demurrage Calculator</h3>
+        <p style="font-size: 14px; color: #4a5568; margin-top: 8px;">Add this app to your home screen for quick access!</p>
+        <button class="install-button" onclick="showInstallInstructions()">Install App</button>
+    </div>
+    
+    <script>
+        // Update current time
+        function updateCurrentTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = formatDateTime(now);
+        }
+        
+        function formatDateTime(date) {
+            return date.toLocaleString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
+        
+        function formatCurrency(amount) {
+            return amount.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        function calculateDemurrage() {
+            const arrivalDateInput = document.getElementById('arrivalDate').value;
+            const weightInput = document.getElementById('weight').value;
+            
+            if (!arrivalDateInput || !weightInput) {
+                document.getElementById('results').style.display = 'none';
+                return;
+            }
+            
+            const arrival = new Date(arrivalDateInput);
+            const weight = parseFloat(weightInput);
+            const now = new Date();
+            
+            // Calculate hours elapsed
+            const hoursElapsed = (now - arrival) / (1000 * 60 * 60);
+            const daysElapsed = hoursElapsed / 24;
+            const freeHours = 80;
+            const chargeableHours = Math.max(0, hoursElapsed - freeHours);
+            const chargeableDaysExact = chargeableHours / 24;
+            const chargeableDaysRounded = Math.ceil(chargeableDaysExact);
+            
+            // Calculate end of free period
+            const freeEndTime = new Date(arrival.getTime() + freeHours * 60 * 60 * 1000);
+            
+            // Calculate charges by tier
+            let days3to10 = 0;
+            let days11to20 = 0;
+            let days21plus = 0;
+            
+            if (chargeableDaysRounded > 0) {
+                days3to10 = Math.min(chargeableDaysRounded, 8);
+                if (chargeableDaysRounded > 8) {
+                    days11to20 = Math.min(chargeableDaysRounded - 8, 10);
+                    if (chargeableDaysRounded > 18) {
+                        days21plus = chargeableDaysRounded - 18;
+                    }
+                }
+            }
+            
+            // Calculate amounts
+            const charge3to10 = days3to10 * weight * 2.30;
+            const charge11to20 = days11to20 * weight * 3.66;
+            const charge21plus = days21plus * weight * 6.10;
+            const subtotal = charge3to10 + charge11to20 + charge21plus;
+            
+            // Apply minimum charge
+            const applicableDemurrage = chargeableHours > 0 ? Math.max(subtotal, 30) : 0;
+            const gst = applicableDemurrage * 0.08;
+            const total = applicableDemurrage + gst;
+            
+            // Quantity for invoice format
+            const quantity = weight * chargeableDaysRounded;
+            
+            // Update UI
+            document.getElementById('hoursElapsed').textContent = hoursElapsed.toFixed(1) + ' hrs';
+            document.getElementById('daysElapsed').textContent = '(' + daysElapsed.toFixed(2) + ' days)';
+            document.getElementById('chargeableHours').textContent = chargeableHours.toFixed(1) + ' hrs';
+            document.getElementById('chargeableDaysExact').textContent = '(' + chargeableDaysExact.toFixed(2) + ' days)';
+            document.getElementById('chargeableDaysRounded').textContent = chargeableDaysRounded;
+            document.getElementById('quantity').textContent = formatCurrency(quantity);
+            document.getElementById('freeEndTime').textContent = formatDateTime(freeEndTime);
+            
+            document.getElementById('days3to10').textContent = days3to10;
+            document.getElementById('days11to20').textContent = days11to20;
+            document.getElementById('days21plus').textContent = days21plus;
+            
+            document.getElementById('charge3to10').textContent = formatCurrency(charge3to10);
+            document.getElementById('charge11to20').textContent = formatCurrency(charge11to20);
+            document.getElementById('charge21plus').textContent = formatCurrency(charge21plus);
+            
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('applicableDemurrage').textContent = formatCurrency(applicableDemurrage);
+            document.getElementById('gst').textContent = formatCurrency(gst);
+            document.getElementById('total').textContent = formatCurrency(total);
+            
+            document.getElementById('results').style.display = 'block';
+        }
+        
+        // Event listeners
+        document.getElementById('arrivalDate').addEventListener('input', calculateDemurrage);
+        document.getElementById('weight').addEventListener('input', calculateDemurrage);
+        
+        // Update current time every second
+        setInterval(updateCurrentTime, 1000);
+        updateCurrentTime();
+        
+        // Install prompt
+        function showInstallPrompt() {
+            if (window.navigator.standalone === false) {
+                document.getElementById('installPrompt').style.display = 'block';
+            }
+        }
+        
+        function hideInstallPrompt() {
+            document.getElementById('installPrompt').style.display = 'none';
+            localStorage.setItem('installPromptDismissed', 'true');
+        }
+        
+        function showInstallInstructions() {
+            alert('To install:\n1. Tap the Share button (square with arrow)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" to install the app');
+        }
+        
+        // Show install prompt after 5 seconds if not dismissed before
+        setTimeout(() => {
+            if (!localStorage.getItem('installPromptDismissed')) {
+                showInstallPrompt();
+            }
+        }, 5000);
+        
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>
