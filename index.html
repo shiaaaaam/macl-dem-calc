@@ -7,7 +7,7 @@
     <!-- iOS meta tags for PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Demurrage Calc">
+    <meta name="apple-mobile-web-app-title" content="MACL Calculator">
     <meta name="theme-color" content="#2563eb">
     
     <!-- App icons -->
@@ -18,7 +18,7 @@
     <!-- Web App Manifest -->
     <link rel="manifest" href="manifest.json">
     
-    <title>Maldives Airports Demurrage Calculator</title>
+    <title>Maldives Airports Charges Calculator</title>
     
     <style>
         * {
@@ -72,6 +72,74 @@
             -webkit-overflow-scrolling: touch;
         }
         
+        .view {
+            display: none;
+        }
+        
+        .view.active {
+            display: block;
+        }
+        
+        /* Landing Page Styles */
+        .landing-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 60vh;
+            gap: 20px;
+        }
+        
+        .main-button {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .main-button:active {
+            transform: scale(0.98);
+        }
+        
+        .main-button:hover {
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        
+        .main-button-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        
+        .main-button-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        
+        .main-button-desc {
+            font-size: 14px;
+            color: #718096;
+        }
+        
+        /* Form Styles */
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            color: #2563eb;
+            font-weight: 600;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        
+        .back-button:hover {
+            text-decoration: underline;
+        }
+        
         .input-group {
             margin-bottom: 20px;
         }
@@ -84,7 +152,7 @@
             margin-bottom: 8px;
         }
         
-        input {
+        input, select {
             width: 100%;
             padding: 12px 16px;
             font-size: 16px;
@@ -95,13 +163,45 @@
             -webkit-appearance: none;
         }
         
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #2563eb;
         }
         
         input[type="datetime-local"] {
             min-height: 44px;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+        }
+        
+        .radio-option {
+            flex: 1;
+            position: relative;
+        }
+        
+        .radio-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .radio-label {
+            display: block;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .radio-option input[type="radio"]:checked + .radio-label {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
         }
         
         .card {
@@ -165,7 +265,7 @@
             color: #2563eb;
         }
         
-        #results {
+        #demurrageResults, #terminalResults {
             display: none;
         }
     </style>
@@ -173,45 +273,142 @@
 <body>
     <div class="app">
         <div class="header">
-            <h1>✈️ Demurrage Calculator</h1>
+            <h1>✈️ MACL Charges Calculator</h1>
             <div class="current-time" id="currentTime"></div>
         </div>
         
         <div class="content">
-            <div class="card">
-                <div class="input-group">
-                    <label>Flight Arrival Date & Time</label>
-                    <input type="datetime-local" id="arrivalDate" />
-                </div>
-                
-                <div class="input-group">
-                    <label>Shipment Weight (kg)</label>
-                    <input type="number" id="weight" placeholder="Enter weight in kg" inputmode="decimal" />
+            <!-- Landing Page -->
+            <div id="landingView" class="view active">
+                <div class="landing-container">
+                    <div class="main-button" onclick="showView('terminalView')">
+                        <div class="main-button-icon">🏢</div>
+                        <div class="main-button-title">Terminal Charge</div>
+                        <div class="main-button-desc">Calculate terminal handling charges</div>
+                    </div>
+                    
+                    <div class="main-button" onclick="showView('demurrageView')">
+                        <div class="main-button-icon">⏱️</div>
+                        <div class="main-button-title">Demurrage Charge</div>
+                        <div class="main-button-desc">Calculate storage demurrage fees</div>
+                    </div>
                 </div>
             </div>
             
-            <div id="results">
-                <div class="highlight-box">
-                    <div class="highlight-label">Chargeable Days (Rounded Up)</div>
-                    <div class="highlight-value"><span id="chargeableDaysRounded">0</span> days</div>
+            <!-- Terminal Charge View -->
+            <div id="terminalView" class="view">
+                <div class="back-button" onclick="showView('landingView')">
+                    ← Back to Menu
                 </div>
                 
                 <div class="card">
-                    <div class="card-header">Charges Summary</div>
+                    <div class="card-header">Terminal Charge Calculator</div>
                     
-                    <div class="summary-row">
-                        <span class="summary-label">Demurrage</span>
-                        <span class="summary-value">MVR <span id="demurrage">0.00</span></span>
+                    <div class="input-group">
+                        <label>Shipment Weight (kg)</label>
+                        <input type="number" id="terminalWeight" placeholder="Enter weight in kg" inputmode="decimal" />
                     </div>
                     
-                    <div class="summary-row">
-                        <span class="summary-label">GST (8%)</span>
-                        <span class="summary-value">MVR <span id="gst">0.00</span></span>
+                    <div class="input-group">
+                        <label>Shipment Type</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="general" name="shipmentType" value="general" checked>
+                                <label class="radio-label" for="general">General</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="perishable" name="shipmentType" value="perishable">
+                                <label class="radio-label" for="perishable">Perishable</label>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="total-row">
-                        <span>TOTAL</span>
-                        <span>MVR <span id="total">0.00</span></span>
+                    <div class="input-group">
+                        <label>Number of DOs</label>
+                        <input type="number" id="doCount" value="0" min="0" inputmode="numeric" />
+                    </div>
+                </div>
+                
+                <div id="terminalResults">
+                    <div class="card">
+                        <div class="card-header">Charges Summary</div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">Weight Charge (<span id="rateDisplay">2.30</span>/kg)</span>
+                            <span class="summary-value">MVR <span id="weightCharge">0.00</span></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">Base Charge</span>
+                            <span class="summary-value">MVR 40.00</span>
+                        </div>
+                        
+                        <div class="summary-row" id="doChargeRow" style="display: none;">
+                            <span class="summary-label">DO Charges (<span id="doCountDisplay">0</span> × 50)</span>
+                            <span class="summary-value">MVR <span id="doCharge">0.00</span></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">Subtotal</span>
+                            <span class="summary-value">MVR <span id="terminalSubtotal">0.00</span></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">GST (8%)</span>
+                            <span class="summary-value">MVR <span id="terminalGst">0.00</span></span>
+                        </div>
+                        
+                        <div class="total-row">
+                            <span>TOTAL</span>
+                            <span>MVR <span id="terminalTotal">0.00</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Demurrage Charge View -->
+            <div id="demurrageView" class="view">
+                <div class="back-button" onclick="showView('landingView')">
+                    ← Back to Menu
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">Demurrage Charge Calculator</div>
+                    
+                    <div class="input-group">
+                        <label>Flight Arrival Date & Time</label>
+                        <input type="datetime-local" id="arrivalDate" />
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Shipment Weight (kg)</label>
+                        <input type="number" id="demurrageWeight" placeholder="Enter weight in kg" inputmode="decimal" />
+                    </div>
+                </div>
+                
+                <div id="demurrageResults">
+                    <div class="highlight-box">
+                        <div class="highlight-label">Chargeable Days (Rounded Up)</div>
+                        <div class="highlight-value"><span id="chargeableDaysRounded">0</span> days</div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">Charges Summary</div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">Demurrage</span>
+                            <span class="summary-value">MVR <span id="demurrage">0.00</span></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span class="summary-label">GST (8%)</span>
+                            <span class="summary-value">MVR <span id="gst">0.00</span></span>
+                        </div>
+                        
+                        <div class="total-row">
+                            <span>TOTAL</span>
+                            <span>MVR <span id="total">0.00</span></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -219,6 +416,14 @@
     </div>
     
     <script>
+        // View management
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(viewId).classList.add('active');
+        }
+        
         // Update current time
         function updateCurrentTime() {
             const now = new Date();
@@ -243,12 +448,51 @@
             });
         }
         
+        // Terminal Charge Calculator
+        function calculateTerminalCharge() {
+            const weight = parseFloat(document.getElementById('terminalWeight').value) || 0;
+            const shipmentType = document.querySelector('input[name="shipmentType"]:checked').value;
+            const doCount = parseInt(document.getElementById('doCount').value) || 0;
+            
+            if (weight <= 0) {
+                document.getElementById('terminalResults').style.display = 'none';
+                return;
+            }
+            
+            const rate = shipmentType === 'general' ? 2.30 : 3.45;
+            const weightCharge = weight * rate;
+            const baseCharge = 40;
+            const doCharge = doCount * 50;
+            const subtotal = weightCharge + baseCharge + doCharge;
+            const gst = subtotal * 0.08;
+            const total = subtotal + gst;
+            
+            // Update display
+            document.getElementById('rateDisplay').textContent = rate.toFixed(2);
+            document.getElementById('weightCharge').textContent = formatCurrency(weightCharge);
+            
+            if (doCount > 0) {
+                document.getElementById('doChargeRow').style.display = 'flex';
+                document.getElementById('doCountDisplay').textContent = doCount;
+                document.getElementById('doCharge').textContent = formatCurrency(doCharge);
+            } else {
+                document.getElementById('doChargeRow').style.display = 'none';
+            }
+            
+            document.getElementById('terminalSubtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('terminalGst').textContent = formatCurrency(gst);
+            document.getElementById('terminalTotal').textContent = formatCurrency(total);
+            
+            document.getElementById('terminalResults').style.display = 'block';
+        }
+        
+        // Demurrage Calculator
         function calculateDemurrage() {
             const arrivalDateInput = document.getElementById('arrivalDate').value;
-            const weightInput = document.getElementById('weight').value;
+            const weightInput = document.getElementById('demurrageWeight').value;
             
             if (!arrivalDateInput || !weightInput) {
-                document.getElementById('results').style.display = 'none';
+                document.getElementById('demurrageResults').style.display = 'none';
                 return;
             }
             
@@ -295,12 +539,18 @@
             document.getElementById('gst').textContent = formatCurrency(gst);
             document.getElementById('total').textContent = formatCurrency(total);
             
-            document.getElementById('results').style.display = 'block';
+            document.getElementById('demurrageResults').style.display = 'block';
         }
         
         // Event listeners
+        document.getElementById('terminalWeight').addEventListener('input', calculateTerminalCharge);
+        document.querySelectorAll('input[name="shipmentType"]').forEach(radio => {
+            radio.addEventListener('change', calculateTerminalCharge);
+        });
+        document.getElementById('doCount').addEventListener('input', calculateTerminalCharge);
+        
         document.getElementById('arrivalDate').addEventListener('input', calculateDemurrage);
-        document.getElementById('weight').addEventListener('input', calculateDemurrage);
+        document.getElementById('demurrageWeight').addEventListener('input', calculateDemurrage);
         
         // Update current time every second
         setInterval(updateCurrentTime, 1000);
